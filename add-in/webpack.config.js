@@ -46,10 +46,8 @@ async function buildConfig(env, options) {
       }),
       new CopyWebpackPlugin({
         patterns: [
-          {
-            from: "assets",
-            to: "assets",
-          },
+          { from: "assets", to: "assets" },
+          { from: "src/picker.html", to: "picker.html" },
         ],
       }),
     ],
