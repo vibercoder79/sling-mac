@@ -55,7 +55,7 @@ async function buildConfig(env, options) {
     ],
     devServer: {
       hot: true,
-      host: "127.0.0.1",
+      host: "localhost",
       port: 3000,
       server: {
         type: "https",

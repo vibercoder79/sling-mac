@@ -13,12 +13,12 @@
   <DisplayName DefaultValue="Sling-Mac" />
   <Description DefaultValue="Slingt Outlook-Mails in den Obsidian-Vault." />
 
-  <IconUrl DefaultValue="https://127.0.0.1:3000/assets/icon-32.png" />
-  <HighResolutionIconUrl DefaultValue="https://127.0.0.1:3000/assets/icon-64.png" />
+  <IconUrl DefaultValue="https://localhost:3000/assets/icon-32.png" />
+  <HighResolutionIconUrl DefaultValue="https://localhost:3000/assets/icon-64.png" />
 
   <AppDomains>
-    <AppDomain>https://127.0.0.1:3000</AppDomain>
-    <AppDomain>https://127.0.0.1:7331</AppDomain>
+    <AppDomain>https://localhost:3000</AppDomain>
+    <AppDomain>https://localhost:7331</AppDomain>
   </AppDomains>
 
   <Hosts>
@@ -34,7 +34,7 @@
   <FormSettings>
     <Form xsi:type="ItemRead">
       <DesktopSettings>
-        <SourceLocation DefaultValue="https://127.0.0.1:3000/taskpane.html" />
+        <SourceLocation DefaultValue="https://localhost:3000/taskpane.html" />
         <RequestedHeight>250</RequestedHeight>
       </DesktopSettings>
     </Form>
@@ -91,14 +91,14 @@
 
     <Resources>
       <bt:Images>
-        <bt:Image id="Icon.16x16" DefaultValue="https://127.0.0.1:3000/assets/icon-16.png" />
-        <bt:Image id="Icon.32x32" DefaultValue="https://127.0.0.1:3000/assets/icon-32.png" />
-        <bt:Image id="Icon.64x64" DefaultValue="https://127.0.0.1:3000/assets/icon-64.png" />
-        <bt:Image id="Icon.80x80" DefaultValue="https://127.0.0.1:3000/assets/icon-80.png" />
+        <bt:Image id="Icon.16x16" DefaultValue="https://localhost:3000/assets/icon-16.png" />
+        <bt:Image id="Icon.32x32" DefaultValue="https://localhost:3000/assets/icon-32.png" />
+        <bt:Image id="Icon.64x64" DefaultValue="https://localhost:3000/assets/icon-64.png" />
+        <bt:Image id="Icon.80x80" DefaultValue="https://localhost:3000/assets/icon-80.png" />
       </bt:Images>
       <bt:Urls>
-        <bt:Url id="Commands.Url" DefaultValue="https://127.0.0.1:3000/commands.html" />
-        <bt:Url id="Taskpane.Url" DefaultValue="https://127.0.0.1:3000/taskpane.html" />
+        <bt:Url id="Commands.Url" DefaultValue="https://localhost:3000/commands.html" />
+        <bt:Url id="Taskpane.Url" DefaultValue="https://localhost:3000/taskpane.html" />
       </bt:Urls>
       <bt:ShortStrings>
         <bt:String id="GroupLabel" DefaultValue="Sling-Mac" />
@@ -152,14 +152,14 @@
 
       <Resources>
         <bt:Images>
-          <bt:Image id="Icon.16x16" DefaultValue="https://127.0.0.1:3000/assets/icon-16.png" />
-          <bt:Image id="Icon.32x32" DefaultValue="https://127.0.0.1:3000/assets/icon-32.png" />
-          <bt:Image id="Icon.64x64" DefaultValue="https://127.0.0.1:3000/assets/icon-64.png" />
-          <bt:Image id="Icon.80x80" DefaultValue="https://127.0.0.1:3000/assets/icon-80.png" />
+          <bt:Image id="Icon.16x16" DefaultValue="https://localhost:3000/assets/icon-16.png" />
+          <bt:Image id="Icon.32x32" DefaultValue="https://localhost:3000/assets/icon-32.png" />
+          <bt:Image id="Icon.64x64" DefaultValue="https://localhost:3000/assets/icon-64.png" />
+          <bt:Image id="Icon.80x80" DefaultValue="https://localhost:3000/assets/icon-80.png" />
         </bt:Images>
         <bt:Urls>
-          <bt:Url id="Commands.Url" DefaultValue="https://127.0.0.1:3000/commands.html" />
-          <bt:Url id="Taskpane.Url" DefaultValue="https://127.0.0.1:3000/taskpane.html" />
+          <bt:Url id="Commands.Url" DefaultValue="https://localhost:3000/commands.html" />
+          <bt:Url id="Taskpane.Url" DefaultValue="https://localhost:3000/taskpane.html" />
         </bt:Urls>
         <bt:ShortStrings>
           <bt:String id="GroupLabel" DefaultValue="Sling-Mac" />

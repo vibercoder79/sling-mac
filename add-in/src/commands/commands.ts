@@ -2,6 +2,8 @@
 
 Office.onReady(() => {});
 
+(globalThis as unknown as Record<string, unknown>)["slingMail"] = slingMail;
+
 export async function slingMail(event: Office.AddinCommands.Event): Promise<void> {
   const item = Office.context.mailbox.item;
   if (!item) {
@@ -29,7 +31,7 @@ export async function slingMail(event: Office.AddinCommands.Event): Promise<void
   };
 
   try {
-    const response = await fetch("https://127.0.0.1:7331/sling", {
+    const response = await fetch("https://localhost:7331/sling", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),

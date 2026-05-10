@@ -86,9 +86,9 @@ ${body}
   }
 });
 
-// TLS-Zertifikate laden
-const certPath = path.resolve(__dirname, "../certs/cert.pem");
-const keyPath = path.resolve(__dirname, "../certs/key.pem");
+// TLS-Zertifikate: dasselbe trusted Cert wie der Add-in Dev Server
+const certPath = path.join(process.env.HOME!, ".office-addin-dev-certs/localhost.crt");
+const keyPath = path.join(process.env.HOME!, ".office-addin-dev-certs/localhost.key");
 
 const httpsOptions = {
   cert: fs.readFileSync(certPath),
@@ -97,6 +97,6 @@ const httpsOptions = {
 
 const PORT = 7331;
 
-https.createServer(httpsOptions, app).listen(PORT, "127.0.0.1", () => {
-  console.log(`Sling-Mac Helper laeuft auf https://127.0.0.1:${PORT}`);
+https.createServer(httpsOptions, app).listen(PORT, "localhost", () => {
+  console.log(`Sling-Mac Helper laeuft auf https://localhost:${PORT}`);
 });
