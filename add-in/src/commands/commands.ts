@@ -22,10 +22,6 @@ export async function slingMail(event: Office.AddinCommands.Event): Promise<void
     });
   });
 
-  // Anhänge via EWS GetAttachment holen.
-  // getAttachmentContentAsync und getCallbackTokenAsync({isRest:true}) schlagen im
-  // Function-Command-Context fehl. makeEwsRequestAsync funktioniert ohne Azure-AD-
-  // Registrierung und läuft auch in Function Commands — braucht ReadWriteMailbox.
   type AttachmentPayload = { name: string; contentBase64: string };
   const attachments: AttachmentPayload[] = [];
 
@@ -52,6 +48,8 @@ export async function slingMail(event: Office.AddinCommands.Event): Promise<void
     });
   }
 
+  const accountEmail = Office.context.mailbox.userProfile.emailAddress;
+
   const basePayload = {
     subject,
     from: from ? { displayName: from.displayName, emailAddress: from.emailAddress } : null,
@@ -59,7 +57,7 @@ export async function slingMail(event: Office.AddinCommands.Event): Promise<void
     body,
     date: new Date().toISOString(),
     conversationId: (item as Office.MessageRead).conversationId ?? "",
-    accountEmail: Office.context.mailbox.userProfile.emailAddress,
+    accountEmail,
     attachments,
   };
 
@@ -88,5 +86,36 @@ export async function slingMail(event: Office.AddinCommands.Event): Promise<void
     event.completed();
   }
 
-  void doSling("");
+  Office.context.ui.displayDialogAsync(
+    `https://localhost:3000/picker.html?email=${encodeURIComponent(accountEmail)}`,
+    { height: 60, width: 30 },
+    (asyncResult) => {
+      if (asyncResult.status !== Office.AsyncResultStatus.Succeeded) {
+        void doSling("");
+        return;
+      }
+      const dialog = asyncResult.value;
+      dialog.addEventHandler(
+        Office.EventType.DialogEventReceived,
+        (arg: { message: string; origin: string | undefined } | { error: number }) => {
+          if ("error" in arg) {
+            if (arg.error === 12006) {
+              fetch("https://localhost:7331/get-pending-folder")
+                .then((r) => r.json() as Promise<{ folder: string | null }>)
+                .then((data) => {
+                  if (data.folder === null) {
+                    event.completed();
+                  } else {
+                    void doSling(data.folder);
+                  }
+                })
+                .catch(() => void doSling(""));
+            } else {
+              void doSling("");
+            }
+          }
+        }
+      );
+    }
+  );
 }

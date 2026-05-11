@@ -33,7 +33,8 @@
       try {
         const controller = new AbortController();
         setTimeout(() => controller.abort(), 5000);
-        const resp = await fetch("/folders", { signal: controller.signal });
+        const email = new URLSearchParams(globalThis.location.search).get("email") ?? "";
+        const resp = await fetch(`/folders?email=${encodeURIComponent(email)}`, { signal: controller.signal });
         const data = await resp.json();
         allFolders = data.folders || [];
         selected = data.default || null;

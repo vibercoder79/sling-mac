@@ -1,11 +1,35 @@
 <!DOCTYPE html>
-<html>
-  <head>
-    <meta charset="UTF-8" />
-    <title>Sling-Mac</title>
-    <script src="https://appsforoffice.microsoft.com/lib/1/hosted/office.js"></script>
-  </head>
-  <body>
-    <p>Sling-Mac Sprint 0</p>
-  </body>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <title>Sling-Mac</title>
+  <script src="https://appsforoffice.microsoft.com/lib/1/hosted/office.js"></script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: -apple-system, sans-serif; font-size: 13px; background: #fff; color: #1a1a1a; display: flex; flex-direction: column; height: 100vh; }
+    #header { padding: 10px 12px; border-bottom: 1px solid #ddd; background: #f8f8f8; flex-shrink: 0; }
+    #subject { font-weight: 600; font-size: 12px; color: #444; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    #search { width: 100%; padding: 8px 10px; border: none; border-bottom: 1px solid #ddd; font-size: 13px; outline: none; flex-shrink: 0; }
+    #list { flex: 1; overflow-y: auto; }
+    .folder { padding: 8px 12px; cursor: pointer; border-bottom: 1px solid #f0f0f0; }
+    .folder:hover, .folder.selected { background: #0078d4; color: #fff; }
+    #footer { padding: 8px; background: #f8f8f8; border-top: 1px solid #ddd; flex-shrink: 0; }
+    #status { margin-bottom: 8px; padding: 6px 8px; border-radius: 3px; font-size: 12px; display: none; white-space: pre-wrap; line-height: 1.4; }
+    #status.ok { background: #dff0d8; color: #3c763d; }
+    #status.error { background: #f2dede; color: #a94442; }
+    #btn-sling { width: 100%; padding: 8px; background: #0078d4; color: #fff; border: none; border-radius: 3px; cursor: pointer; font-size: 13px; }
+    #btn-sling:disabled { background: #aaa; cursor: default; }
+  </style>
+</head>
+<body>
+  <div id="header">
+    <div id="subject">Lade…</div>
+  </div>
+  <input id="search" type="text" placeholder="Ordner suchen…" />
+  <div id="list"></div>
+  <div id="footer">
+    <div id="status"></div>
+    <button id="btn-sling" disabled>Sling</button>
+  </div>
+</body>
 </html>
