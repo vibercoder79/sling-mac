@@ -79,8 +79,8 @@
                     <bt:Image size="32" resid="Icon.32x32" />
                     <bt:Image size="80" resid="Icon.80x80" />
                   </Icon>
-                  <Action xsi:type="ShowTaskpane">
-                    <SourceLocation resid="Taskpane.Url" />
+                  <Action xsi:type="ExecuteFunction">
+                    <FunctionName>slingMail</FunctionName>
                   </Action>
                 </Control>
               </Group>
@@ -140,8 +140,8 @@
                       <bt:Image size="32" resid="Icon.32x32" />
                       <bt:Image size="80" resid="Icon.80x80" />
                     </Icon>
-                    <Action xsi:type="ShowTaskpane">
-                        <SourceLocation resid="Taskpane.Url" />
+                    <Action xsi:type="ExecuteFunction">
+                      <FunctionName>slingMail</FunctionName>
                     </Action>
                   </Control>
                 </Group>
