@@ -38,6 +38,7 @@ async function buildConfig(env, options) {
         filename: "commands.html",
         template: "./src/commands/commands.html",
         chunks: ["commands"],
+        scriptLoading: "blocking", // Office.js ruft slingMail synchron auf — kein defer erlaubt
       }),
       new HtmlWebpackPlugin({
         filename: "taskpane.html",

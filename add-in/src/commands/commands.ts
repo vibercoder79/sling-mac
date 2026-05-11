@@ -12,6 +12,14 @@ export async function slingMail(event: Office.AddinCommands.Event): Promise<void
   }
   const item: Office.Item & Office.MessageRead = rawItem as Office.Item & Office.MessageRead;
 
+  // DEBUG — wird nach erstem erfolgreichen Test entfernt
+  item.notificationMessages.addAsync("sling-debug", {
+    type: Office.MailboxEnums.ItemNotificationMessageType.InformationalMessage,
+    message: "Sling: Funktion gestartet…",
+    icon: "Icon.16x16",
+    persistent: false,
+  });
+
   const subject = item.subject ?? "(kein Betreff)";
   const from = (item as Office.MessageRead).from;
   const toRecipients = (item as Office.MessageRead).to ?? [];
@@ -78,29 +86,7 @@ export async function slingMail(event: Office.AddinCommands.Event): Promise<void
     event.completed();
   }
 
-  // Ordner-Picker Dialog öffnen
-  Office.context.ui.displayDialogAsync(
-    "https://localhost:3000/picker.html",
-    { height: 55, width: 35, displayInIframe: false },
-    (dialogResult) => {
-      if (dialogResult.status !== Office.AsyncResultStatus.Succeeded) {
-        void doSling("");
-        return;
-      }
-      const dialog = dialogResult.value;
-      dialog.addEventHandler(Office.EventType.DialogMessageReceived, (args) => {
-        const msg = (args as { message: string }).message;
-        dialog.close();
-        if (msg === "__cancel__") {
-          event.completed();
-        } else {
-          void doSling(msg);
-        }
-      });
-      // Dialog vom User geschlossen (X-Button)
-      dialog.addEventHandler(Office.EventType.DialogEventReceived, () => {
-        event.completed();
-      });
-    }
-  );
+  // Picker deaktiviert (Sprint 0) — direkt zum Default-Ordner slingen.
+  // Der Dialog-WebView in Outlook blockiert cross-origin Requests; Fix kommt in Sprint 1.
+  void doSling("");
 }

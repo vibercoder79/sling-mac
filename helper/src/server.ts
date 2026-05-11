@@ -1,7 +1,7 @@
 import * as fs from "fs";
 import * as path from "path";
 import * as https from "https";
-import express, { Request, Response } from "express";
+import express, { Request, Response, Router } from "express";
 import { loadConfig, getAccountConfig, SlingMacConfig } from "./config";
 import TurndownService from "turndown";
 
@@ -14,21 +14,6 @@ try {
   console.error((err as Error).message);
   process.exit(1);
 }
-
-const app = express();
-app.use(express.json());
-
-// CORS-Header fuer alle Requests
-app.use((_req: Request, res: Response, next) => {
-  res.setHeader("Access-Control-Allow-Origin", "*");
-  res.setHeader("Access-Control-Allow-Headers", "Content-Type");
-  next();
-});
-
-// OPTIONS pre-flight
-app.options("*", (_req: Request, res: Response) => {
-  res.sendStatus(200);
-});
 
 const HIDDEN = new Set([".obsidian", ".git", ".trash", "node_modules"]);
 
@@ -48,14 +33,14 @@ async function readFolders(vaultPath: string): Promise<{ label: string; path: st
 }
 
 let foldersCache: { folders: { label: string; path: string }[]; at: number } | null = null;
+let pendingFolder: string | null = null;
 
-// GET /health
-app.get("/health", (_req: Request, res: Response) => {
-  res.json({ status: "ok", version: "0.1.0" });
-});
+// Picker-Endpoints werden auf Port 7331 UND Port 3000 gemountet.
+// Port 3000 = same-origin fuer picker.html im Dialog-WebView (Sandbox-Fix).
+const pickerRouter = Router();
+pickerRouter.use(express.json());
 
-// GET /folders
-app.get("/folders", async (req: Request, res: Response) => {
+pickerRouter.get("/folders", async (req: Request, res: Response) => {
   try {
     const email = req.query["email"] as string | undefined;
     const accountConfig = getAccountConfig(config, email ?? "");
@@ -67,6 +52,40 @@ app.get("/folders", async (req: Request, res: Response) => {
   } catch (err) {
     res.status(500).json({ error: (err as Error).message });
   }
+});
+
+pickerRouter.post("/set-pending-folder", (req: Request, res: Response) => {
+  pendingFolder = (req.body as { folder: string }).folder ?? null;
+  res.json({ ok: true });
+});
+
+// API-App (Port 7331)
+const app = express();
+app.use(express.json());
+
+// CORS-Header fuer cross-origin Requests aus dem Add-in-WebView
+app.use((_req: Request, res: Response, next) => {
+  res.setHeader("Access-Control-Allow-Origin", "*");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type");
+  next();
+});
+
+app.options("*", (_req: Request, res: Response) => {
+  res.sendStatus(200);
+});
+
+app.use(pickerRouter);
+
+// GET /health
+app.get("/health", (_req: Request, res: Response) => {
+  res.json({ status: "ok", version: "0.1.0" });
+});
+
+// GET /get-pending-folder
+app.get("/get-pending-folder", (_req: Request, res: Response) => {
+  const folder = pendingFolder;
+  pendingFolder = null;
+  res.json({ folder });
 });
 
 // POST /sling
@@ -85,7 +104,7 @@ app.post("/sling", async (req: Request, res: Response) => {
     };
 
     const accountConfig = getAccountConfig(config, accountEmail);
-    const slingFolder = targetFolder ?? accountConfig.defaultFolder;
+    const slingFolder = targetFolder || accountConfig.defaultFolder;
 
     // Datum im Format YYYY-MM-DD
     const dateStr = new Date(date).toISOString().slice(0, 10);
@@ -180,8 +199,15 @@ https.createServer(httpsOptions, app).listen(PORT, "localhost", () => {
   console.log(`Sling-Mac Helper laeuft auf https://localhost:${PORT}`);
 });
 
-// Static File Server (Port 3000) — ersetzt webpack dev server
+// Static File Server + Picker-API (Port 3000)
+// pickerRouter hier gemountet → /folders und /set-pending-folder sind same-origin
+// fuer picker.html im Dialog-WebView → kein Cross-Origin-Block mehr.
 const staticApp = express();
+staticApp.use((_req, res, next) => {
+  res.setHeader("Cache-Control", "no-store");
+  next();
+});
+staticApp.use(pickerRouter);
 staticApp.use(express.static(path.resolve(__dirname, "../../add-in/dist")));
 const STATIC_PORT = 3000;
 https.createServer(httpsOptions, staticApp).listen(STATIC_PORT, "localhost", () => {

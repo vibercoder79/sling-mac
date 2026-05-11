@@ -9,6 +9,7 @@
     "validate": "office-addin-manifest validate manifest.xml"
   },
   "devDependencies": {
+    "@microsoft/office-js": "^1.1.110",
     "@types/office-js": "^1.0.0",
     "@types/webpack-env": "^1.18.0",
     "copy-webpack-plugin": "^11.0.0",

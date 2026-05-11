@@ -3,7 +3,6 @@
 <head>
   <meta charset="UTF-8" />
   <title>Sling-Mac — Zielordner</title>
-  <script src="https://appsforoffice.microsoft.com/lib/1/hosted/office.js"></script>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body { font-family: -apple-system, sans-serif; font-size: 13px; background: #fff; color: #1a1a1a; }
@@ -30,9 +29,11 @@
     let allFolders = [];
     let selected = null;
 
-    Office.onReady(async () => {
+    (async () => {
       try {
-        const resp = await fetch("https://localhost:7331/folders");
+        const controller = new AbortController();
+        setTimeout(() => controller.abort(), 5000);
+        const resp = await fetch("/folders", { signal: controller.signal });
         const data = await resp.json();
         allFolders = data.folders || [];
         selected = data.default || null;
@@ -40,7 +41,7 @@
       } catch (e) {
         document.getElementById("list").textContent = "Fehler: " + e.message;
       }
-    });
+    })();
 
     function render(folders) {
       const list = document.getElementById("list");
@@ -65,12 +66,22 @@
       render(allFolders.filter(f => f.label.toLowerCase().includes(q)));
     });
 
-    document.getElementById("btn-sling").addEventListener("click", () => {
-      if (selected) Office.context.ui.messageParent(selected);
+    document.getElementById("btn-sling").addEventListener("click", async () => {
+      if (!selected) return;
+      document.getElementById("btn-sling").disabled = true;
+      try {
+        await fetch("/set-pending-folder", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ folder: selected }),
+        });
+      } finally {
+        window.close();
+      }
     });
 
     document.getElementById("btn-cancel").addEventListener("click", () => {
-      Office.context.ui.messageParent("__cancel__");
+      window.close();
     });
   </script>
 </body>
