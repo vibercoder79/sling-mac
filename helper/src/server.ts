@@ -38,7 +38,7 @@ let pendingFolder: string | null = null;
 // Picker-Endpoints werden auf Port 7331 UND Port 3000 gemountet.
 // Port 3000 = same-origin fuer picker.html im Dialog-WebView (Sandbox-Fix).
 const pickerRouter = Router();
-pickerRouter.use(express.json());
+pickerRouter.use(express.json({ limit: "10mb" }));
 
 pickerRouter.get("/folders", async (req: Request, res: Response) => {
   try {
@@ -61,7 +61,7 @@ pickerRouter.post("/set-pending-folder", (req: Request, res: Response) => {
 
 // API-App (Port 7331)
 const app = express();
-app.use(express.json());
+app.use(express.json({ limit: "10mb" }));
 
 // CORS-Header fuer cross-origin Requests aus dem Add-in-WebView
 app.use((_req: Request, res: Response, next) => {
@@ -100,8 +100,10 @@ app.post("/sling", async (req: Request, res: Response) => {
       conversationId: string;
       accountEmail: string;
       targetFolder?: string;
-      attachments?: { name: string; isInline: boolean; contentBase64: string }[];
+      attachments?: { name: string; contentBase64: string }[];
     };
+
+    console.log(`[sling] subject="${subject.slice(0, 50)}" attachments=${attachments?.length ?? 0}`);
 
     const accountConfig = getAccountConfig(config, accountEmail);
     const slingFolder = targetFolder || accountConfig.defaultFolder;
@@ -115,8 +117,9 @@ app.post("/sling", async (req: Request, res: Response) => {
       .slice(0, 80)
       .trim();
 
-    const fileName = `${dateStr} ${cleanSubject}.md`;
-    const targetPath = path.join(accountConfig.vaultPath, slingFolder);
+    const folderName = `${dateStr} ${cleanSubject}`;
+    const fileName = `${folderName}.md`;
+    const targetPath = path.join(accountConfig.vaultPath, slingFolder, folderName);
     await fs.promises.mkdir(targetPath, { recursive: true });
     const filePath = path.join(targetPath, fileName);
 
@@ -150,26 +153,29 @@ date: ${dateStr}
 ${bodyMarkdown}
 `;
 
-    // Anhänge speichern
+    // Anhänge als Base64 vom Add-in empfangen (via EWS GetAttachment) und speichern
     const savedAttachments: string[] = [];
     if (attachments && attachments.length > 0) {
-      const attFolder = path.join(targetPath, `${dateStr} ${cleanSubject}`);
-      await fs.promises.mkdir(attFolder, { recursive: true });
       for (const att of attachments) {
-        const attPath = path.join(attFolder, att.name);
-        await fs.promises.writeFile(attPath, Buffer.from(att.contentBase64, "base64"));
-        savedAttachments.push(att.name);
+        try {
+          await fs.promises.writeFile(
+            path.join(targetPath, att.name),
+            Buffer.from(att.contentBase64, "base64")
+          );
+          savedAttachments.push(att.name);
+        } catch (err) {
+          console.error(`Anhang-Fehler (${att.name}):`, (err as Error).message);
+        }
       }
     }
 
     // Wikilinks an Markdown anhängen
     let finalMarkdown = markdown;
     if (savedAttachments.length > 0) {
-      const folderName = `${dateStr} ${cleanSubject}`;
       const wikilinks = savedAttachments
         .map((name) => {
           const isImage = /\.(png|jpg|jpeg|gif|webp|svg)$/i.test(name);
-          return isImage ? `![[${folderName}/${name}]]` : `[[${folderName}/${name}]]`;
+          return isImage ? `![[${name}]]` : `[[${name}]]`;
         })
         .join("\n");
       finalMarkdown += `\n## Anhänge\n\n${wikilinks}\n`;

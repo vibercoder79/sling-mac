@@ -12,14 +12,6 @@ export async function slingMail(event: Office.AddinCommands.Event): Promise<void
   }
   const item: Office.Item & Office.MessageRead = rawItem as Office.Item & Office.MessageRead;
 
-  // DEBUG — wird nach erstem erfolgreichen Test entfernt
-  item.notificationMessages.addAsync("sling-debug", {
-    type: Office.MailboxEnums.ItemNotificationMessageType.InformationalMessage,
-    message: "Sling: Funktion gestartet…",
-    icon: "Icon.16x16",
-    persistent: false,
-  });
-
   const subject = item.subject ?? "(kein Betreff)";
   const from = (item as Office.MessageRead).from;
   const toRecipients = (item as Office.MessageRead).to ?? [];
@@ -30,25 +22,34 @@ export async function slingMail(event: Office.AddinCommands.Event): Promise<void
     });
   });
 
-  // Anhänge sammeln (Mailbox 1.8 — graceful skip bei Fehler)
-  type AttachmentPayload = { name: string; isInline: boolean; contentBase64: string };
+  // Anhänge via EWS GetAttachment holen.
+  // getAttachmentContentAsync und getCallbackTokenAsync({isRest:true}) schlagen im
+  // Function-Command-Context fehl. makeEwsRequestAsync funktioniert ohne Azure-AD-
+  // Registrierung und läuft auch in Function Commands — braucht ReadWriteMailbox.
+  type AttachmentPayload = { name: string; contentBase64: string };
   const attachments: AttachmentPayload[] = [];
-  for (const att of (item as Office.MessageRead).attachments ?? []) {
-    if (att.attachmentType !== Office.MailboxEnums.AttachmentType.File) continue;
-    try {
-      const content = await new Promise<string>((resolve, reject) => {
-        item.getAttachmentContentAsync(att.id, (result) => {
-          if (result.status === Office.AsyncResultStatus.Succeeded) {
-            resolve(result.value.content);
-          } else {
-            reject(new Error(result.error.message));
-          }
-        });
-      });
-      attachments.push({ name: att.name, isInline: att.isInline, contentBase64: content });
-    } catch {
-      // nicht lesbar — überspringen
+
+  const fileAtts = ((item as Office.MessageRead).attachments ?? []).filter(
+    (a) => a.attachmentType === Office.MailboxEnums.AttachmentType.File && !a.isInline
+  );
+
+  const attErrors: string[] = [];
+  for (const att of fileAtts) {
+    const result = await new Promise<Office.AsyncResult<Office.AttachmentContent>>((resolve) => {
+      item.getAttachmentContentAsync(att.id, resolve);
+    });
+    if (result.status === Office.AsyncResultStatus.Succeeded) {
+      attachments.push({ name: att.name, contentBase64: result.value.content });
+    } else {
+      attErrors.push(`${att.name}: ${result.error?.message ?? "unbekannt"}`);
     }
+  }
+
+  if (attErrors.length > 0) {
+    item.notificationMessages.addAsync("sling-att-err", {
+      type: Office.MailboxEnums.ItemNotificationMessageType.ErrorMessage,
+      message: `Anhang-Fehler: ${attErrors.join("; ")}`,
+    });
   }
 
   const basePayload = {
@@ -70,10 +71,11 @@ export async function slingMail(event: Office.AddinCommands.Event): Promise<void
         body: JSON.stringify({ ...basePayload, targetFolder }),
       });
       if (!response.ok) throw new Error(`Helper: ${response.status} ${response.statusText}`);
-      const result: { path: string } = await response.json();
+      const result: { path: string; attachments: number } = await response.json();
+      const attNote = result.attachments > 0 ? ` | ${result.attachments} Anhang/Anhänge` : "";
       item.notificationMessages.addAsync("sling-ok", {
         type: Office.MailboxEnums.ItemNotificationMessageType.InformationalMessage,
-        message: `Geslingt → ${result.path}`,
+        message: `Geslingt → ${result.path}${attNote}`,
         icon: "Icon.16x16",
         persistent: false,
       });
@@ -86,7 +88,5 @@ export async function slingMail(event: Office.AddinCommands.Event): Promise<void
     event.completed();
   }
 
-  // Picker deaktiviert (Sprint 0) — direkt zum Default-Ordner slingen.
-  // Der Dialog-WebView in Outlook blockiert cross-origin Requests; Fix kommt in Sprint 1.
   void doSling("");
 }
