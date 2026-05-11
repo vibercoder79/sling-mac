@@ -10,6 +10,10 @@ Vorlage war SlingMD (Windows-VSTO). Sling-Mac ist drastisch reduziert auf den Ma
 
 ## Architektur
 
+![Architektur und Datenfluss](docs/architecture.png)
+
+Editierbare Excalidraw-Quelle: [`docs/architecture.excalidraw`](docs/architecture.excalidraw).
+
 Drei Komponenten:
 
 | Komponente | Aufgabe |
