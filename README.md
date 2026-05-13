@@ -1,10 +1,10 @@
 # Sling-Mac
 
-Persoenliches Office.js Add-in fuer Outlook auf macOS, das geoeffnete Mails inklusive Anhaengen per Klick als Markdown in einen Obsidian-Vault schreibt.
+Persoenliches Office.js Add-in fuer Outlook auf macOS, das geoeffnete Mails inklusive Anhaengen per Klick als Markdown in einen Obsidian-Vault schreibt. Beim Setup wird pro Outlook-Account ein Vault abgefragt; genau diese Vault-Struktur steht spaeter in der Sling-Mac-Oberflaeche als Zielordner-Auswahl bereit.
 
 ## Was es macht
 
-Ein Klick im Outlook-Ribbon ("Sling") nimmt die aktuell geoeffnete Mail, holt Body und Anhaenge, schreibt eine Markdown-Datei nach `01 Inbox/YYYY-MM-DD Betreff/` im konfigurierten Vault und legt die Anhaenge in denselben Ordner. Wikilinks zu den Anhaengen werden automatisch in die Markdown-Datei eingebettet (Bilder als `![[…]]`-Embed, andere Dateien als `[[…]]`-Link). Der Vorgang ist bewusst manuell, es gibt kein Auto-Sling.
+Ein Klick im Outlook-Ribbon ("Sling") nimmt die aktuell geoeffnete Mail, holt Body und Anhaenge, schreibt eine Markdown-Datei in den konfigurierten Obsidian-Vault und legt die Anhaenge in denselben Ordner. Standardmaessig landet die Mail unter dem im Setup definierten Default-Ordner, z.B. `01 Inbox/YYYY-MM-DD Betreff/`. Oeffnet man die Sling-Mac-Oberflaeche in Outlook, liest der Helper die Ordnerstruktur des beim Setup angegebenen Vaults aus und bietet diese Ordner als Zielauswahl an, aehnlich wie andere Outlook-Integrationen ihre Zielorte anbieten. Wikilinks zu den Anhaengen werden automatisch in die Markdown-Datei eingebettet (Bilder als `![[…]]`-Embed, andere Dateien als `[[…]]`-Link). Der Vorgang ist bewusst manuell, es gibt kein Auto-Sling.
 
 Vorlage war SlingMD (Windows-VSTO). Sling-Mac ist drastisch reduziert auf den Mac-Use-Case: nur Mail-Read-Surface, nur Slingen.
 
@@ -76,9 +76,26 @@ launchctl load ~/Library/LaunchAgents/ch.owlist.sling-mac-helper.plist
 
 Logs liegen unter `/tmp/sling-mac-helper.log` und `/tmp/sling-mac-helper.error.log`.
 
-### Konfiguration anlegen
+### Konfiguration per Setup anlegen
 
-`~/.sling-mac.json` mit mindestens einem Account-Block (siehe naechster Abschnitt).
+Das Helper-Setup fragt interaktiv nach der Outlook-E-Mail-Adresse, dem Vault-Pfad und dem Standard-Zielordner innerhalb des Vaults:
+
+```bash
+cd helper
+npm run setup
+```
+
+Beispiel-Dialog:
+
+```text
+Sling-Mac Setup
+
+Outlook E-Mail-Adresse: deine-mail@example.com
+Vault-Pfad [/Users/deinuser/Obsidian]: /Users/deinuser/Obsidian/SecondBrain
+Standard-Sling-Ordner (relativ zum Vault) [01 Inbox]: 01 Inbox
+```
+
+Das Setup schreibt diese Angaben nach `~/.sling-mac.json`. Der `vaultPath` ist nicht nur der Schreibort fuer geslingte Mails, sondern auch die Quelle fuer die spaetere Ordnerliste in der Sling-Mac-Oberflaeche: Der Helper liest die erste und zweite Ordnerebene dieses Vaults und liefert sie an den Outlook-Picker.
 
 ### Manifest sideloaden
 
@@ -102,16 +119,45 @@ Die Helper-Konfiguration lebt in `~/.sling-mac.json`:
 | Feld | Bedeutung |
 |---|---|
 | `accounts` | Map: E-Mail-Adresse → Account-Konfiguration. Die Adresse wird vom Add-in via `Office.context.mailbox.userProfile.emailAddress` mitgeschickt. |
-| `vaultPath` | Absoluter Pfad zum Obsidian-Vault-Root. |
-| `defaultFolder` | Zielordner relativ zum Vault. Alle geslingten Mails landen unter `<vaultPath>/<defaultFolder>/<YYYY-MM-DD Betreff>/`. |
+| `vaultPath` | Absoluter Pfad zum Obsidian-Vault-Root. Aus diesem Vault liest der Helper auch die Ordner, die spaeter im Sling-Mac-Picker erscheinen. |
+| `defaultFolder` | Zielordner relativ zum Vault. Dieser Ordner ist beim Slingen vorausgewaehlt; ohne explizite Auswahl landen Mails unter `<vaultPath>/<defaultFolder>/<YYYY-MM-DD Betreff>/`. |
 
 Multi-Account: pro E-Mail-Adresse ein eigener Block mit eigenem Vault und Default-Ordner. Wird beim Slingen keine passende Adresse gefunden, faellt der Helper auf den ersten Account in der Map zurueck (siehe `getAccountConfig` in `helper/src/config.ts`).
 
 ## Nutzung
 
+### Schnelles Slingen in den Default-Ordner
+
 1. Eine Mail in Outlook for Mac oeffnen.
 2. Im Ribbon auf **Sling** klicken.
-3. Outlook zeigt eine Info-Notification mit dem geschriebenen Pfad an. Bei Anhaengen wird die Anzahl mit angezeigt. Fehler erscheinen als Error-Notification.
+3. Outlook schreibt die Mail in den im Setup definierten Default-Ordner und zeigt eine Info-Notification mit dem geschriebenen Pfad an. Bei Anhaengen wird die Anzahl mit angezeigt. Fehler erscheinen als Error-Notification.
+
+### Zielordner ueber die Sling-Mac-Oberflaeche waehlen
+
+Die Sling-Mac-Oberflaeche zeigt rechts in Outlook die aktuell geoeffnete Mail und darunter eine suchbare Ordnerliste. Diese Liste kommt aus dem Vault, der beim Setup als `vaultPath` gespeichert wurde. Sichtbar sind die obersten Vault-Ordner und deren direkte Unterordner, z.B.:
+
+```text
+00 Kontext
+00 Kontext/Workflows
+01 Inbox
+02 Projekte
+02 Projekte/CAS Vibe Engineering
+04 Ressourcen
+```
+
+Der im Setup definierte `defaultFolder` ist vorausgewaehlt. Wer einen anderen Zielordner anklickt und dann **Sling** ausloest, schreibt die Mail in diesen Ordner; ohne Auswahl wird der Default-Ordner verwendet.
+
+### Skizzen fuer das Handbuch
+
+Die anonymisierten Excalidraw-Skizzen zeigen die beiden relevanten Outlook-Momente:
+
+![Sling-Mac im Outlook-Add-in-Menue](docs/sling-mac-outlook-menu.png)
+
+Editierbare Excalidraw-Quelle: [`docs/sling-mac-outlook-menu.excalidraw`](docs/sling-mac-outlook-menu.excalidraw).
+
+![Sling-Mac-Zielordner aus dem konfigurierten Vault](docs/sling-mac-folder-picker.png)
+
+Editierbare Excalidraw-Quelle: [`docs/sling-mac-folder-picker.excalidraw`](docs/sling-mac-folder-picker.excalidraw).
 
 ## Ordnerstruktur im Vault
 
@@ -160,7 +206,8 @@ Der `## Anhaenge`-Block wird nur angehaengt, wenn Anhaenge gespeichert wurden.
 
 ## Bekannte Einschraenkungen / Scope-Reduktion
 
-- **Kein Vault-Ordner-Picker beim Slingen.** Wurde sowohl als Dialog-WebView als auch als TaskPane versucht. Der Dialog-Weg wird durch die Outlook-Mac-Sandbox blockiert (Cross-Origin-Probleme trotz Same-Origin-Workaround auf Port 3000). Der TaskPane-Weg scheitert in der Praxis am aggressiven Manifest-Caching im M365 Admin Center pro Add-in-ID. Workaround: Default-Ordner in `~/.sling-mac.json` setzen und in Obsidian nachsortieren. Die Picker-Endpunkte (`/folders`, `/set-pending-folder`, `/get-pending-folder`) und `picker.html` / `taskpane.html` sind im Repo, aber nicht aktiv im Manifest-Pfad eingebunden.
+- **Outlook-Mac-Caching bleibt zaeh.** Nach Manifest-Aenderungen kann Outlook bzw. das M365 Admin Center alte Add-in-Metadaten hartnaeckig behalten. Wenn die Sling-Mac-Oberflaeche oder der Picker nicht wie erwartet erscheinen, hilft in der Praxis oft eine neue Add-in-ID bzw. ein erneutes Sideloading.
+- **Ordner-Picker ist bewusst flach.** Der Helper liest die erste und zweite Ordnerebene des konfigurierten Vaults. Tiefere Strukturen bleiben unsichtbar, damit die Outlook-Liste schnell und uebersichtlich bleibt.
 - **Nur Mail-Read-Surface.** Das Manifest haengt am `MessageReadCommandSurface`. Kein Compose-Support, kein Slingen aus dem Editor heraus.
 - **Anhaenge** werden via `getAttachmentContentAsync` geholt. Funktioniert mit der hier deklarierten `ReadWriteMailbox`-Permission, ist aber auf den `AttachmentType.File` und nicht-inline Anhaenge beschraenkt.
 - **Conversation-Threading** wird zwar im Payload mitgeschickt (`conversationId`), aktuell aber nicht zur Gruppierung verwendet. Jede Mail bekommt einen eigenen Ordner.
