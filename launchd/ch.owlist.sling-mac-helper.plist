@@ -8,11 +8,11 @@
     <key>ProgramArguments</key>
     <array>
       <string>/opt/homebrew/opt/node@22/bin/node</string>
-      <string>/Users/tobiasschmidt/Documents/GitHub/sling-mac/helper/dist/server.js</string>
+      <string>/Users/tobiasschmidt/Developer/sling-mac/helper/dist/server.js</string>
     </array>
 
     <key>WorkingDirectory</key>
-    <string>/Users/tobiasschmidt/Documents/GitHub/sling-mac/helper</string>
+    <string>/Users/tobiasschmidt/Developer/sling-mac/helper</string>
 
     <key>RunAtLoad</key>
     <true/>

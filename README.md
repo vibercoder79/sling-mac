@@ -35,6 +35,13 @@ Beide Server nutzen das gleiche TLS-Zertifikat aus `~/.office-addin-dev-certs/` 
 
 ## Installation / Setup
 
+> [!WARNING]
+> **Nicht in einen iCloud-synchronisierten Ordner klonen** (`~/Documents`, `~/Desktop` bei aktiviertem "Schreibtisch & Dokumente"-Sync, oder iCloud Drive direkt).
+>
+> iCloud lagert bei "Mac-Speicher optimieren" einzelne Dateien als Platzhalter aus. Trifft Nodes synchroner Datei-Read (`express.static` im Helper bzw. `require()` beim Laden) auf so eine ausgelagerte Datei, gibt macOS **errno -11 (EDEADLK)** zurueck statt sie rechtzeitig zu materialisieren. Folge: der Static-Server liefert `commands.js` als **HTTP 500**, der Sling-Button laedt seinen Handler nicht, und das Add-in wirkt kaputt — intermittierend und schwer zu diagnostizieren.
+>
+> Empfohlen: ein nicht-synchronisiertes Verzeichnis wie `~/Developer/sling-mac`. Alle Pfade unten und in `launchd/ch.owlist.sling-mac-helper.plist` gehen von `~/Developer/sling-mac` aus — beim Verschieben eines bestehenden Setups die Plist-Pfade entsprechend anpassen und den Daemon neu laden.
+
 ### Voraussetzungen
 
 - macOS
@@ -46,8 +53,8 @@ Beide Server nutzen das gleiche TLS-Zertifikat aus `~/.office-addin-dev-certs/` 
 ### Repo klonen und bauen
 
 ```bash
-git clone <repo-url> ~/Documents/GitHub/sling-mac
-cd ~/Documents/GitHub/sling-mac
+git clone <repo-url> ~/Developer/sling-mac   # NICHT nach ~/Documents (iCloud) — siehe Warnung oben
+cd ~/Developer/sling-mac
 
 cd helper
 npm install
@@ -249,8 +256,7 @@ sling-mac/
 │   ├── tsconfig.json
 │   └── package.json
 ├── launchd/
-│   ├── ch.owlist.sling-mac-helper.plist   # Helper-Daemon
-│   └── ch.owlist.sling-mac-addin.plist
+│   └── ch.owlist.sling-mac-helper.plist   # Helper-Daemon (serviert API 7331 + Static 3000)
 └── README.md
 ```
 
@@ -260,4 +266,4 @@ sling-mac/
 
 ## Lizenz / Status
 
-Persoenliches Tool. Privates Repo. Kein Public Release geplant. Keine Versionierung, keine Garantien, keine Support-Verpflichtung.
+Persoenliches Tool. Privates Repo. Kein Public Release geplant. Versionierung ueber GitHub-Releases/Tags (ab `v0.1.1`), ansonsten keine Garantien, keine Support-Verpflichtung.
