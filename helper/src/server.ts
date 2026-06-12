@@ -199,11 +199,26 @@ const httpsOptions = {
   key: fs.readFileSync(keyPath),
 };
 
+// Dual-Stack-Helper: Outlook for Mac WKWebView loest "localhost" zu IPv4 (127.0.0.1) auf,
+// Node bindet bei "localhost" seit 17+ nur an IPv6 (::1). Wir binden deshalb an BEIDE
+// Loopback-Adressen, damit sowohl Outlook (IPv4) als auch curl/Tools (IPv6) den Helper
+// erreichen. Loopback-only (kein "0.0.0.0") damit der Helper nicht aus dem Netz erreichbar ist.
+function listenDualStack(
+  appHandler: express.Application,
+  port: number,
+  label: string,
+) {
+  for (const addr of ["127.0.0.1", "::1"]) {
+    https.createServer(httpsOptions, appHandler).listen(port, addr, () => {
+      const display = addr === "::1" ? `[${addr}]` : addr;
+      console.log(`${label} auf https://${display}:${port}`);
+    });
+  }
+}
+
 // API-Server (Port 7331)
 const PORT = 7331;
-https.createServer(httpsOptions, app).listen(PORT, "localhost", () => {
-  console.log(`Sling-Mac Helper laeuft auf https://localhost:${PORT}`);
-});
+listenDualStack(app, PORT, "Sling-Mac Helper");
 
 // Static File Server + Picker-API (Port 3000)
 // pickerRouter hier gemountet → /folders und /set-pending-folder sind same-origin
@@ -216,6 +231,4 @@ staticApp.use((_req, res, next) => {
 staticApp.use(pickerRouter);
 staticApp.use(express.static(path.resolve(__dirname, "../../add-in/dist")));
 const STATIC_PORT = 3000;
-https.createServer(httpsOptions, staticApp).listen(STATIC_PORT, "localhost", () => {
-  console.log(`Sling-Mac Static Server auf https://localhost:${STATIC_PORT}`);
-});
+listenDualStack(staticApp, STATIC_PORT, "Sling-Mac Static Server");

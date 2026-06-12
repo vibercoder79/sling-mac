@@ -217,6 +217,21 @@ date: 2026-05-11
 
 Der `## Anhaenge`-Block wird nur angehaengt, wenn Anhaenge gespeichert wurden.
 
+## Troubleshooting
+
+Bekannte Fehlerbilder mit Diagnose- und Fix-Befehlen: siehe [`docs/TROUBLESHOOTING.md`](docs/TROUBLESHOOTING.md).
+
+Schnell-Check, wenn das Add-in nicht funktioniert:
+
+```bash
+launchctl list | grep -i sling                          # Daemon lebt?
+lsof -nP -iTCP:7331 -sTCP:LISTEN                        # Port 7331 IPv4 + IPv6?
+curl -k -I https://127.0.0.1:7331/health                # Erreichbar via IPv4?
+curl -k -I https://127.0.0.1:3000/taskpane.html         # Static-Server via IPv4?
+```
+
+Wenn der Daemon nur an `[::1]` lauscht oder IPv4-curl Connection refused liefert: auf v0.1.3+ updaten (Dual-Stack-Fix).
+
 ## Bekannte Einschraenkungen / Scope-Reduktion
 
 - **Ordner-Picker ist nicht aktiv (toter Code).** Helper-Endpunkt `/folders` und die Picker-UI `taskpane.ts` sind vollstaendig implementiert, aber das Manifest exponiert nur einen `ExecuteFunction`-Button (`slingMail`), der `targetFolder: ""` hardcodiert — also immer den Default-Ordner nimmt. Es gibt keinen `ShowTaskpane`-Button, der die Oberflaeche oeffnet. Grund: Der `ShowTaskpane`-Weg liess sich auf Outlook for Mac nicht stabil ausliefern (siehe naechster Punkt). Reaktivierung = `ShowTaskpane`-Control ins Manifest + neue Add-in-ID.
