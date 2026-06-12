@@ -40,13 +40,30 @@ npm run build
 launchctl kickstart -k "gui/$(id -u)/ch.owlist.sling-mac-helper"
 ```
 
-### Fix 2 — Cert-Trust setzen
+### Fix 2 — Cert abgelaufen oder nicht im Keychain (häufigster Auslöser)
+
+`office-addin-dev-certs install` erzeugt im Default nur ein **30-Tage-Cert**. Nach Ablauf lehnt Outlooks WKWebView die TLS-Verbindung ab und liefert die «Inhalt gesperrt»-Meldung.
+
+**Diagnose:**
 
 ```bash
-# Cert für localhost neu installieren und im System-Keychain als trusted setzen
-cd ~/Developer/sling-mac
-npx office-addin-dev-certs install --machine
+openssl x509 -in ~/.office-addin-dev-certs/localhost.crt -noout -dates
+# notAfter prüfen. In der Vergangenheit? → Cert ist abgelaufen.
+
+security find-certificate -c "Developer CA for Microsoft Office Add-ins" /Library/Keychains/System.keychain
+# Wenn nichts gefunden: Cert nicht als trusted im System-Keychain.
 ```
+
+**Fix:**
+
+```bash
+cd ~/Developer/sling-mac/helper
+npx office-addin-dev-certs uninstall --machine
+npx office-addin-dev-certs install --machine --days 365
+launchctl kickstart -k "gui/$(id -u)/ch.owlist.sling-mac-helper"
+```
+
+Wichtig: `--days 365` setzen, sonst läuft das Cert in 30 Tagen wieder ab. `--machine` braucht das sudo-Passwort und installiert die CA in den System-Keychain.
 
 Anschliessend Outlook beenden und neu starten.
 

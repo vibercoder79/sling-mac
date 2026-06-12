@@ -219,7 +219,7 @@ Der `## Anhaenge`-Block wird nur angehaengt, wenn Anhaenge gespeichert wurden.
 
 ## Troubleshooting
 
-Bekannte Fehlerbilder mit Diagnose- und Fix-Befehlen: siehe [`docs/TROUBLESHOOTING.md`](docs/TROUBLESHOOTING.md).
+Bekannte Fehlerbilder mit Diagnose- und Fix-Befehlen: siehe [`docs/TROUBLESHOOTING.md`](docs/TROUBLESHOOTING.md) und die Schnell-Übersicht in [`docs/KNOWN_ISSUES.md`](docs/KNOWN_ISSUES.md).
 
 Schnell-Check, wenn das Add-in nicht funktioniert:
 
